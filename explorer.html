@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>*{box-sizing:border-box}html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Γ-Locus Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --panel-2:#f5f7f9; --ink:#12171d; --muted:#5b6772;
+  --line:#d3dae1; --grid:#c8d0d8; --rim:#8695a3; --hair:#e2e7ec;
+  --accent:#0c8f95; --accent-glow:rgba(12,143,149,.18);
+  --c-robust:#0c8f95; --c-stale:#c07214; --c-open:#3f6fd6; --c-off:#8695a3; --c-anti:#c33b46;
+  --shadow:0 1px 2px rgba(16,23,29,.06),0 8px 24px rgba(16,23,29,.08);
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b0f14; --panel:#111821; --panel-2:#0e141b; --ink:#e6edf3; --muted:#8b98a5;
+  --line:#212c37; --grid:#232f3b; --rim:#3c4d5c; --hair:#1a232d;
+  --accent:#35d0d6; --accent-glow:rgba(53,208,214,.22);
+  --c-robust:#35d0d6; --c-stale:#f2a33c; --c-open:#7aa2ff; --c-off:#66757f; --c-anti:#e5484d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --bg:#0b0f14; --panel:#111821; --panel-2:#0e141b; --ink:#e6edf3; --muted:#8b98a5;
+  --line:#212c37; --grid:#232f3b; --rim:#3c4d5c; --hair:#1a232d;
+  --accent:#35d0d6; --accent-glow:rgba(53,208,214,.22);
+  --c-robust:#35d0d6; --c-stale:#f2a33c; --c-open:#7aa2ff; --c-off:#66757f; --c-anti:#e5484d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;
+  padding:0;margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:18px;padding-block:28px 48px}
+header.top{margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 6px}
+h1{font-size:clamp(26px,4.4vw,40px);font-weight:600;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:8px 0 0;max-width:62ch;font-size:15px}
+.grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);gap:20px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.chartcard{padding:16px 16px 10px}
+figure{margin:0}
+svg#chart{width:100%;height:auto;display:block;touch-action:none}
+.cap{color:var(--muted);font-size:12px;font-family:var(--mono);text-align:center;margin:6px 0 2px}
+/* controls */
+.controls{display:flex;flex-direction:column;gap:14px}
+.panel{padding:16px}
+.panel h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;margin:0 0 12px;font-family:var(--mono)}
+.field{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+label.lb{font-size:12px;color:var(--muted);font-family:var(--mono);letter-spacing:.03em}
+select,button{font-family:var(--sans);font-size:14px;color:var(--ink)}
+select{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 10px;width:100%}
+.sweeprow{display:flex;align-items:center;gap:10px}
+input[type=range]{flex:1;accent-color:var(--accent);height:22px}
+button.play{background:var(--accent);color:#04191b;border:none;border-radius:9px;padding:8px 12px;
+  font-weight:600;cursor:pointer;font-family:var(--mono);letter-spacing:.02em;min-width:74px}
+:root[data-theme="light"] button.play,:root:not([data-theme="dark"]) button.play{color:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.play{color:#04191b}}
+.toggles{display:flex;flex-wrap:wrap;gap:8px}
+.tg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:5px 11px;cursor:pointer}
+.tg input{accent-color:var(--accent);margin:0}
+.tg.on{color:var(--ink);border-color:var(--accent)}
+.pval{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);text-align:left;padding:0 8px 8px;border-bottom:1px solid var(--line)}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+td{padding:9px 8px;border-bottom:1px solid var(--hair);vertical-align:middle}
+tr.noterow{cursor:pointer}
+tr.noterow:hover td{background:var(--panel-2)}
+tr.noterow.sel td{background:var(--accent-glow)}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle;flex:none}
+.nt{display:flex;align-items:center}
+.nt span.tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:22ch}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.bar{height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;min-width:46px}
+.bar > i{display:block;height:100%;background:var(--accent)}
+.tag{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:5px;white-space:nowrap;
+  border:1px solid currentColor}
+/* readout for selected */
+.readout{padding:16px}
+.readout .name{font-weight:600;font-size:15px;margin:0 0 2px;text-wrap:balance}
+.readout .verdict{color:var(--muted);font-size:13px;margin:8px 0 12px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.metric{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.metric .k{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.metric .v{font-family:var(--mono);font-size:19px;font-weight:500;margin-top:3px;font-variant-numeric:tabular-nums}
+/* legend */
+.legend{padding:16px}
+.legend ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+.legend li{display:grid;grid-template-columns:16px 1fr;gap:11px;align-items:start;font-size:13px}
+.legend .sw{width:14px;height:14px;border-radius:4px;margin-top:2px}
+.legend b{font-weight:600}
+.legend .mm{color:var(--muted)}
+.footnote{color:var(--muted);font-size:12px;margin-top:18px;max-width:70ch}
+.footnote code{font-family:var(--mono);background:var(--panel-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.recipe{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.rk{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.rlist{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:9px}
+.rlist li{display:grid;grid-template-columns:20px 82px 1fr;gap:9px;align-items:center;font-size:12.5px}
+.rlist .rn{width:19px;height:19px;border-radius:50%;background:var(--accent-glow);color:var(--accent);
+  font-family:var(--mono);font-size:11px;display:grid;place-items:center;font-weight:600}
+.rlist .rc{font-family:var(--mono);color:var(--accent);font-size:12px}
+.rlist .ro{color:var(--muted)}
+.rp{color:var(--muted);font-size:13px;margin:0}
+button.tune{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:9px;
+  padding:8px 13px;font-family:var(--mono);font-size:12.5px;cursor:pointer;font-weight:600}
+button.tune:hover{background:var(--accent-glow)}
+.hint{color:var(--muted);font-size:12.5px;margin:0 0 13px}
+button.play[disabled]{opacity:.42;cursor:not-allowed}
+input.clchk{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;margin:0}
+td.chk,th.chk{width:26px;padding-right:0}
+#clresult .rlist li{grid-template-columns:none!important}
+#clresult .rlist li b{font-variant-numeric:tabular-nums}
+.switch{display:inline-flex;gap:4px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:4px;margin:16px 0 2px}
+.swb{background:none;border:none;color:var(--muted);font-family:var(--sans);font-size:13px;font-weight:600;padding:7px 15px;border-radius:7px;cursor:pointer}
+.swb.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+.tdrcard{padding:16px}
+.tdrhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.tdrhead h2{font-size:15px;font-weight:600;letter-spacing:-.01em;text-transform:none;color:var(--ink);font-family:var(--sans)}
+.tdrq{color:var(--muted);font-size:12.5px;margin:5px 0 0;font-family:var(--mono)}
+.tdrnav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbtn{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1}
+svg#tdr{width:100%;height:auto;display:block;overflow:visible}
+.rail{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-family:var(--mono);border:1px solid var(--line);
+  border-radius:16px;padding:4px 10px;cursor:pointer;background:var(--panel-2);color:var(--ink)}
+.chip .cdot{width:8px;height:8px;border-radius:50%;flex:none}
+.chip.sel{border-color:var(--accent)}
+.sumline{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--hair);font-size:13px}
+.sumline .k{color:var(--muted)}
+.sumline .v{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.statusbadge{font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;border:1px solid currentColor}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav style="font:13px/1.5 'IBM Plex Mono',ui-monospace,monospace;padding:10px clamp(16px,5vw,32px);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid rgba(128,128,128,.3);color:inherit"><a href="index.html" style="color:inherit;text-decoration:none;opacity:.75">Story</a><a href="essay.html" style="color:inherit;text-decoration:none;opacity:.75">Essay</a><a href="explorer.html" style="color:inherit;text-decoration:none;opacity:.75">Interactive&nbsp;→</a></nav>
+
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Retrieval physics</p>
+    <h1>Γ-Locus Explorer</h1>
+    <p class="sub">Every note is one complex number, Γ, seen from the query at the center. Re-ask the query 16 ways
+      and each note traces a <em>locus</em> — and that single trace carries the whole Smith model at once: how well it
+      matches, <em>what kind</em> of mismatch, how robust it is to phrasing, and whether it resonates. Synthetic demo set.</p>
+  </header>
+
+  <div class="switch" role="tablist" aria-label="View">
+    <button class="swb on" id="swSmith" type="button" role="tab">Smith chart</button>
+    <button class="swb" id="swTDR" type="button" role="tab">Retrieval TDR</button>
+  </div>
+
+  <div id="viewSmith">
+  <div class="grid">
+    <section class="card chartcard">
+      <figure>
+        <svg id="chart" viewBox="0 0 600 600" role="img" aria-label="Smith chart of note reflection coefficients"></svg>
+        <figcaption class="cap" id="cap">paraphrase 1 / 16 · reference Z₀ = current query</figcaption>
+      </figure>
+    </section>
+
+    <div class="controls">
+      <section class="card panel">
+        <h2>Instrument</h2>
+        <div class="field">
+          <label class="lb" for="q">Query (reference impedance Z₀)</label>
+          <select id="q"></select>
+        </div>
+        <div class="field">
+          <label class="lb" for="mode">Sweep axis</label>
+          <select id="mode">
+            <option value="para">Paraphrase — robustness across wordings</option>
+            <option value="age">Aging — temporal drift over time</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lb" for="sweep" id="sweeplb">Paraphrase sweep</label>
+          <div class="sweeprow">
+            <button class="play" id="play" aria-label="Play sweep">▶ Play</button>
+            <input type="range" id="sweep" min="0" max="15" value="0" step="1" aria-label="Sweep index">
+            <span class="pval" id="pval">01/16</span>
+          </div>
+          <div class="sweeprow" id="revalrow" hidden style="margin-top:9px">
+            <button class="tune" id="reval" type="button">⟲ Revalidate all to as-of date</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lb">Overlays</label>
+          <div class="toggles" id="toggles">
+            <label class="tg on"><input type="checkbox" id="tGrid" checked>R / X grid</label>
+            <label class="tg on"><input type="checkbox" id="tTrail" checked>Loci trails</label>
+            <label class="tg on"><input type="checkbox" id="tAnti" checked>|Γ|&gt;1 region</label>
+            <label class="tg on"><input type="checkbox" id="tMatch" checked>Matching path</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card readout" id="readout" aria-live="polite"></section>
+
+      <section class="card panel" id="clpanel">
+        <h2>Cluster matching · find common match</h2>
+        <p class="hint" id="clhint">Tick 2+ notes in the table below, then find the single shared context that pulls the whole cluster toward center at once.</p>
+        <div class="field">
+          <label class="lb" for="clbeta">Context strength β</label>
+          <div class="sweeprow"><input type="range" id="clbeta" min="0.2" max="1" step="0.05" value="0.6" aria-label="Context strength">
+          <span class="pval" id="clbval">0.60</span></div>
+        </div>
+        <button class="play" id="clfind" type="button" disabled>▷ Find common match</button>
+        <div id="clresult"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="grid" style="margin-top:20px">
+    <section class="card panel" style="overflow-x:auto">
+      <h2>Notes — ranked by robustness</h2>
+      <table>
+        <thead><tr>
+          <th class="chk" title="add to cluster">∈</th><th>Note</th><th class="num">Fit&nbsp;|Γ|</th><th class="num">VSWR</th>
+          <th>Robustness</th><th>Sensitivity&nbsp;(Q)</th><th>Reads as</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <section class="card legend">
+      <h2>One trace, read six ways</h2>
+      <ul>
+        <li><span class="sw" style="background:var(--c-robust)"></span><div><b>Center = matched</b> (Γ→0). <span class="mm">On-topic and timely — impedance-matched to the query.</span></div></li>
+        <li><span class="sw" style="background:var(--rim);"></span><div><b>Rim = total reflection</b> (|Γ|→1). <span class="mm">Off-topic; the query's energy bounces off.</span></div></li>
+        <li><span class="sw" style="background:var(--c-anti)"></span><div><b>Beyond the rim</b> (|Γ|&gt;1, negative resistance). <span class="mm">Contradictory — actively anti-relevant.</span></div></li>
+        <li><span class="sw" style="background:var(--c-stale)"></span><div><b>Upper half = inductive +jX</b>. <span class="mm">On-topic but <em>stale</em> — settled, aging.</span></div></li>
+        <li><span class="sw" style="background:var(--c-open)"></span><div><b>Lower half = capacitive −jX</b>. <span class="mm">Fresh but <em>unresolved</em> — an open question.</span></div></li>
+        <li><span class="sw" style="background:linear-gradient(90deg,var(--accent),transparent)"></span><div><b>Trace spread = Q</b>. <span class="mm">Tight locus → robust across phrasings; scattered → fragile / phrasing-sensitive.</span></div></li>
+        <li><span class="sw" style="background:repeating-linear-gradient(90deg,var(--accent) 0 5px,transparent 5px 9px)"></span><div><b>Dashed path = matching network</b>. <span class="mm">Select a note — the L-network arcs show how to tune it to center; each arc is a memory move (reaffirm, resolve, bridge via link).</span></div></li>
+      </ul>
+    </section>
+  </div>
+
+  <p class="footnote">Angle answers <em>what kind</em> of mismatch, radius answers <em>how much</em> — the two things a single cosine number can't separate.
+  Switch the query to watch every note move: relevance is measured <em>relative to Z₀</em>, not absolutely. Select a note and hit <em>Tune to match</em> to walk its L-network path to the center — the Smith chart's original job, now reading as a recipe of memory moves. Or tick several notes and <em>Find common match</em>: the one shared context (a broadband matching network) that pulls a whole topic inward at once, with a no-free-lunch audit. Switch <em>Sweep axis</em> to <em>Aging</em> to scrub an as-of date instead: notes drift toward the rim as they age, each at its own claim-aware rate (a concept barely moves; a market note rots fast), and <em>Revalidate</em> snaps them back in. The exact bridge underneath: <code>log(VSWR) = 2·artanh|Γ|</code> = hyperbolic distance from center. Age ≠ truth — a stale note can still be right. Select a note <em>past the rim</em> (contradictory) to <em>Reconcile</em> it: an evidence branch that ends honestly as <b>REVISED</b>, <b>DISPUTED</b>, or <b>UNRESOLVED</b> — with a stability margin that flags echo chambers, never quietly tuning a contradiction to the center.</p>
+  </div><!-- /viewSmith -->
+
+  <div id="viewTDR" hidden>
+    <section class="card tdrcard">
+      <div class="tdrhead">
+        <div><h2>Retrieval TDR — reflectogram of answer construction</h2>
+          <p class="tdrq" id="tdrq"></p></div>
+        <div class="tdrnav">
+          <button class="rbtn" id="rprev" type="button" aria-label="previous route">‹</button>
+          <span class="pval" id="rlabel">Route 1 / 4</span>
+          <button class="rbtn" id="rnext" type="button" aria-label="next route">›</button>
+          <button class="play" id="rplay" type="button">▶ Send impulse</button>
+        </div>
+      </div>
+      <svg id="tdr" viewBox="0 0 900 340" role="img" aria-label="Retrieval TDR reflectogram"></svg>
+      <div class="rail" id="rail"></div>
+      <p class="cap" style="text-align:left">Synthetic route data — not factual search results. ↑ evidence/inference break · ↓ rejected or repeated work · height = severity · x = accumulated cost.</p>
+    </section>
+    <div class="grid" style="margin-top:20px">
+      <section class="card panel" id="tdrsum"></section>
+      <section class="card panel" id="tdrinspect"><p class="hint">Hover or click a spike (or a chip) to inspect the fault and its fix.</p></section>
+    </div>
+    <p class="footnote">A reflectogram debugs <em>where answer-building breaks</em>, not which document ranks — the unit is the answer commitment, not the note. Each spike is a synthetic discontinuity; the path <code>return loss = −20·log₁₀(RMS Γ)</code>, so higher dB = a cleaner route. Send the impulse to watch the query travel the route.</p>
+  </div><!-- /viewTDR -->
+
+<script>
+"use strict";
+/* ---------- concept space (a 6-D stand-in for embeddings; cosine is computed for real) ---------- */
+const AXES = ["memory","retrieval","impedance","hierarchy","trading","cooking"];
+function norm(v){const n=Math.hypot(...v)||1;return v.map(x=>x/n);}
+function dot(a,b){let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;}
+
+const QUERIES = [
+  {name:"How do we retrieve memory better?", w:norm([1,1,.15,.2,0,0])},
+  {name:"Does the Smith chart help retrieval?", w:norm([.4,1,1,.2,0,0])},
+  {name:"Impedance matching for hierarchy embeddings", w:norm([.2,.7,1,1,0,0])},
+];
+/* note: age = days since last validated; temporal ∈ {+1 stale, 0 neutral, -1 unresolved} (paraphrase mode);
+   klass sets the AGING decay rate (concept barely drifts; market rots fast). */
+const NOTES = [
+  {t:"Impedance = retrieval matching",      w:norm([1,1,.6,.1,0,0]),   age:3,  temporal:0, klass:"concept"},
+  {t:"Poincaré disk embeds hierarchy",       w:norm([.3,.7,.5,1,0,0]),  age:22, temporal:0, klass:"concept"},
+  {t:"VSWR as one quality score",            w:norm([.2,.7,1,.1,0,0]),  age:120,temporal:1, klass:"spec"},
+  {t:"Bypass the keyword gate?",             w:norm([.8,.9,.1,.1,0,0]), age:1,  temporal:-1,klass:"forecast"},
+  {t:"Cosine ≡ Smith when recency is flat",  w:norm([.5,.9,.7,.1,0,0]), age:9,  temporal:0, klass:"concept"},
+  {t:"Market regime signal",            w:norm([.1,.35,0,0,1,0]),  age:14, temporal:0, klass:"market"},
+  {t:"Sourdough starter schedule",           w:norm([0,0,0,0,0,1]),     age:40, temporal:0, klass:"spec"},
+  {t:"“Embeddings are unnecessary” (contra)",w:norm([-.6,-.7,.2,0,0,0]),age:30, temporal:1, klass:"market"},
+];
+const TAU={concept:4000,history:1500,spec:180,market:45,forecast:120};   // decay timescale (days) by claim class
+const N_AGE=40, DAY_MIN=-30, DAY_MAX=365;                                 // as-of window: 1 month ago → 1 year out
+const TODAY_IDX=Math.round((0-DAY_MIN)/(DAY_MAX-DAY_MIN)*(N_AGE-1));
+const N_PARA=16, XGAIN=.9, HALFLIFE=60, JITTER=.16;
+const clampAbs=(c)=>{const m=.03;return Math.abs(c)<m?(c<0?-m:m):c;};
+
+/* deterministic PRNG so the demo is stable */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(rng){return Math.sqrt(-2*Math.log(rng()+1e-9))*Math.cos(6.28318*rng());}
+
+/* ---------- physics: (query,note) -> locus of Γ over paraphrases ---------- */
+function paraphrases(qw,seed){
+  const rng=mulberry32(seed),out=[];
+  out.push(qw.slice());                                  // paraphrase 0 = the query itself
+  for(let k=1;k<N_PARA;k++){out.push(norm(qw.map(x=>x+gauss(rng)*JITTER)));}
+  return out;
+}
+function gammaFor(c,note){
+  const R=1/clampAbs(c);
+  const rec=Math.pow(.5,note.age/HALFLIFE);
+  const X=XGAIN*(1-rec)*note.temporal;
+  // Γ = (z-1)/(z+1), z=R+jX
+  const zr=R-1, zi=X, dr=R+1, di=X, den=dr*dr+di*di;
+  return {re:(zr*dr+zi*di)/den, im:(zi*dr-zr*di)/den};
+}
+function mag(g){return Math.hypot(g.re,g.im);}
+
+/* ---------- matching networks: the L-match path from a note's Γ to the matched center ----------
+   Series element = arc along a constant-R circle (adds ±jX). Shunt element = arc along a constant-G
+   circle (adds ±jB). Two arcs (an L-network) always reach the center for any passive load. Each arc
+   is relabeled as the MEMORY operation that transforms the note toward "usable now". */
+function gammaToZ(g){const nr=1+g.re,ni=g.im,dr=1-g.re,di=-g.im,den=dr*dr+di*di||1e-9;
+  return {re:(nr*dr+ni*di)/den, im:(ni*dr-nr*di)/den};}
+function xAxisInt(x1,R1,x2,R2){const d=x2-x1;if(Math.abs(d)<1e-9)return[];
+  const a=(d*d+R1*R1-R2*R2)/(2*d);const h2=R1*R1-a*a;if(h2<-1e-9)return[];
+  const h=Math.sqrt(Math.max(0,h2)),xi=x1+a;
+  return h<1e-6?[{re:xi,im:0}]:[{re:xi,im:h},{re:xi,im:-h}];}
+function arcObj(cx,r,gA,gB,series){const a0=Math.atan2(gA.im,gA.re-cx),a1=Math.atan2(gB.im,gB.re-cx);
+  let da=a1-a0;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;return {cx,r,a0,da,series};}
+function compOf(series,zS,zE){
+  if(series)return (zE.im-zS.im)>=0?"L":"C";                 // series L raises reactance
+  const b=z=>-z.im/((z.re*z.re+z.im*z.im)||1e-9);            // susceptance Im(1/z)
+  return (b(zE)-b(zS))>=0?"C":"L";}                          // shunt C raises susceptance
+function opOf(series,zS,zE){
+  if(series){const cancels=Math.abs(zE.im)<Math.abs(zS.im);
+    if(cancels)return zS.im>0?"Reaffirm — cancel staleness":"Resolve — close the open question";
+    return "Tune reactance to center";}
+  return "Bridge via [[link]] (parallel note)";}
+function twoArc(gL,mid,c1,c2){
+  const a1=arcObj(c1.cx,c1.r,gL,mid,c1.series), a2=arcObj(c2.cx,c2.r,mid,{re:0,im:0},c2.series);
+  const zL=gammaToZ(gL),zM=gammaToZ(mid),zO={re:1,im:0};
+  a1.comp=compOf(c1.series,zL,zM);a1.op=opOf(c1.series,zL,zM);
+  a2.comp=compOf(c2.series,zM,zO);a2.op=opOf(c2.series,zM,zO);
+  return {arcs:[a1,a2],cost:Math.abs(a1.da)*c1.r+Math.abs(a2.da)*c2.r};}
+function computeMatch(gL){
+  if(mag(gL)<0.16)return {feasible:true,arcs:[],nmoves:0,reason:"already matched"};
+  const zL=gammaToZ(gL),rL=zL.re,xL=zL.im;
+  if(rL<=0.02)return {feasible:false,arcs:[],nmoves:0,reason:"negative resistance — no passive match (contradictory note)"};
+  const gLc=rL/(rL*rL+xL*xL),sols=[];
+  const x1r=rL/(rL+1),R1r=1/(rL+1);                          // load constant-R circle (series first)
+  xAxisInt(x1r,R1r,-0.5,0.5).forEach(m=>sols.push(twoArc(gL,m,{cx:x1r,r:R1r,series:true},{cx:-0.5,r:0.5,series:false})));
+  const x1g=-gLc/(gLc+1),R1g=1/(gLc+1);                      // load constant-G circle (shunt first)
+  xAxisInt(x1g,R1g,0.5,0.5).forEach(m=>sols.push(twoArc(gL,m,{cx:x1g,r:R1g,series:false},{cx:0.5,r:0.5,series:true})));
+  const ok=sols.filter(s=>s&&isFinite(s.cost));
+  if(!ok.length)return {feasible:false,arcs:[],nmoves:0,reason:"no two-element match found"};
+  ok.sort((a,b)=>a.cost-b.cost);
+  return {feasible:true,arcs:ok[0].arcs,nmoves:ok[0].arcs.length,reason:"matched"};}
+function arcPts(a,steps){const p=[];for(let i=0;i<=steps;i++){const ang=a.a0+a.da*(i/steps);
+  p.push(G({re:a.cx+a.r*Math.cos(ang),im:a.r*Math.sin(ang)}));}return p;}
+function matchPos(t){const A=matchPath.arcs,cs=A.map(a=>Math.abs(a.da)*a.r||1e-6),T=cs.reduce((s,x)=>s+x,0)||1;
+  let acc=0;for(let i=0;i<A.length;i++){const f=cs[i]/T;if(t<=acc+f||i===A.length-1){const lt=Math.max(0,Math.min(1,(t-acc)/(f||1)));
+    const ang=A[i].a0+A[i].da*lt;return G({re:A[i].cx+A[i].r*Math.cos(ang),im:A[i].r*Math.sin(ang)});}acc+=f;}return G({re:0,im:0});}
+
+function agingX(note,offsetDays){
+  const dt=Math.max(0,offsetDays+note.age);                 // days since validated, at the as-of point
+  const s=1-Math.exp(-dt/(TAU[note.klass]||600));            // claim-aware staleness in [0,1)
+  const sign=note.klass==="forecast"?-1:1;                   // forecasts sit capacitive (unresolved) until closed
+  return XGAIN*s*sign;
+}
+function computeAging(qi){
+  const q=QUERIES[qi].w;
+  return NOTES.map((note,ni)=>{
+    const c=Math.max(_S_MIN,Math.min(_S_MAX,dot(q,note.w))), R=1/c;   // semantic fit fixed; only staleness moves
+    const loc=[];
+    for(let k=0;k<N_AGE;k++){
+      const off=DAY_MIN+(DAY_MAX-DAY_MIN)*k/(N_AGE-1), X=agingX(note,off);
+      const zr=R-1,zi=X,dr=R+1,di=X,den=dr*dr+di*di||1e-9;
+      loc.push({re:(zr*dr+zi*di)/den, im:(zi*dr-zr*di)/den});
+    }
+    const cen=loc[TODAY_IDX], meanAbs=mag(cen), mags=loc.map(mag);
+    let type,label;
+    if(meanAbs>1){type="anti";label="contradictory";}
+    else if(meanAbs<=0.34){type="robust";label="fresh & on-topic";}
+    else if(cen.im>0.13){type="stale";label="aging — revalidate";}
+    else if(cen.im<-0.13){type="open";label="unresolved forecast";}
+    else{type="off";label="off-topic";}
+    const vswr=meanAbs>=1?Infinity:(1+meanAbs)/(1-meanAbs);
+    return {ni,note,loc,mags,cen,meanAbs,minAbs:Math.min(...mags),maxAbs:Math.max(...mags),
+      spread:0,cmag:meanAbs,type,label,vswr,robust:Math.max(0,1-meanAbs),sens:0};
+  });
+}
+function computeQuery(qi){
+  const paras=paraphrases(QUERIES[qi].w, 1000+qi*7);
+  return NOTES.map((note,ni)=>{
+    const loc=paras.map(p=>gammaFor(dot(p,note.w),note));
+    const mags=loc.map(mag);
+    const cen={re:loc.reduce((s,g)=>s+g.re,0)/loc.length, im:loc.reduce((s,g)=>s+g.im,0)/loc.length};
+    const meanAbs=mags.reduce((s,x)=>s+x,0)/mags.length;
+    const minAbs=Math.min(...mags), maxAbs=Math.max(...mags);
+    const spread=Math.sqrt(mags.reduce((s,x)=>s+(x-meanAbs)**2,0)/mags.length);
+    const cmag=Math.hypot(cen.re,cen.im);
+    let type,label;
+    if(cmag>1){type="anti";label="contradictory";}
+    else if(meanAbs<=0.34){type="robust";label="strong match";}
+    else if(cen.im>0.13){type="stale";label="on-topic · stale";}
+    else if(cen.im<-0.13){type="open";label="relevant · unresolved";}
+    else{type="off";label="off-topic";}
+    const vswr=meanAbs>=1?Infinity:(1+meanAbs)/(1-meanAbs);
+    const robust=Math.max(0,Math.min(1,1-meanAbs));
+    const sens=Math.max(0,Math.min(1,spread/0.35));
+    return {ni,note,loc,mags,cen,meanAbs,minAbs,maxAbs,spread,cmag,type,label,vswr,robust,sens};
+  });
+}
+
+/* ---------- rendering ---------- */
+const SVG="http://www.w3.org/2000/svg";
+const CX=300,CY=300,RP=232;                  // |Γ|=1 radius in px
+const TCOL={robust:"var(--c-robust)",stale:"var(--c-stale)",open:"var(--c-open)",off:"var(--c-off)",anti:"var(--c-anti)"};
+const chart=document.getElementById("chart");
+function el(tag,attrs){const e=document.createElementNS(SVG,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function G(g){return{x:CX+g.re*RP, y:CY-g.im*RP};}   // +imag = up
+
+let DATA=[], QI=0, PARA=0, SEL=0, showGrid=true, showTrail=true, showAnti=true;
+let showMatch=true, matchPath=null, tuneT=null, tuneTimer=null;
+let clusterSet=new Set(), clusterResult=null, clStrength=0.6, mode="para", reconcile=null;
+
+/* --- active reconciliation: contradictory notes (|Γ|>1) can't be passively matched. Open a bounded
+   evidence branch, compute a STABILITY MARGIN (independence, provenance, feedback-safety), and end in ONE
+   of three honest states — never quietly animate a contradiction to the center. Synthetic evidence sets. */
+const RECON_SCENARIOS={
+  revised:{items:[
+    {stance:"oppose",cluster:"primary-benchmark",parent:null,cites:[],model:false,directness:.92,freshness:.85,cred:.9},
+    {stance:"oppose",cluster:"independent-study",parent:null,cites:[],model:false,directness:.85,freshness:.7,cred:.85},
+    {stance:"oppose",cluster:"replication",parent:null,cites:[],model:false,directness:.8,freshness:.75,cred:.8},
+    {stance:"support",cluster:"blog-opinion",parent:null,cites:[],model:false,directness:.5,freshness:.6,cred:.4}]},
+  disputed:{items:[
+    {stance:"oppose",cluster:"primary-benchmark",parent:null,cites:[],model:false,directness:.88,freshness:.8,cred:.85},
+    {stance:"oppose",cluster:"independent-study",parent:null,cites:[],model:false,directness:.8,freshness:.7,cred:.8},
+    {stance:"support",cluster:"domain-expert",parent:null,cites:[],model:false,directness:.85,freshness:.75,cred:.82},
+    {stance:"support",cluster:"field-report",parent:null,cites:[],model:false,directness:.8,freshness:.7,cred:.78}]},
+  unresolved:{items:[
+    {stance:"support",cluster:"aggregator",parent:"src-A",cites:["e2"],model:false,directness:.6,freshness:.5,cred:.5},
+    {stance:"support",cluster:"aggregator",parent:"src-A",cites:["e1"],model:false,directness:.55,freshness:.45,cred:.45},
+    {stance:"support",cluster:"llm-summary",parent:"src-A",cites:[],model:true,directness:.5,freshness:.5,cred:.3}]},
+};
+function computeStability(items){
+  const n=items.length, clusters=new Set(items.map(i=>i.cluster));
+  const I=Math.max(0,Math.min(1,clusters.size/n));
+  const parents={};items.forEach(i=>{if(i.parent)parents[i.parent]=(parents[i.parent]||0)+1;});
+  const shared=Object.values(parents).filter(v=>v>1).reduce((a,b)=>a+b,0),
+    dup=n-clusters.size, loops=items.filter(i=>i.cites&&i.cites.length).length;
+  const P=Math.max(0,1-(dup/n)*0.6-(shared/n)*0.6-(loops/n)*0.4);
+  const modelFrac=items.filter(i=>i.model).length/n, selfLoop=loops>0&&shared>0;
+  const F=Math.max(0,1-modelFrac*0.6-(selfLoop?0.4:0));
+  const wSup=items.filter(i=>i.stance==="support").reduce((a,b)=>a+b.cred,0),
+    wOpp=items.filter(i=>i.stance==="oppose").reduce((a,b)=>a+b.cred,0);
+  const D=1-Math.min(1,Math.min(wSup,wOpp)/(Math.max(wSup,wOpp)+1e-6));
+  const C=0.7*(items.reduce((a,b)=>a+b.directness,0)/n)+0.3*(items.reduce((a,b)=>a+b.freshness,0)/n);
+  return {S:Math.round(100*(0.30*I+0.25*P+0.20*F+0.15*D+0.10*C)),I,P,F,D,C,indep:clusters.size,wSup,wOpp};
+}
+function decideOutcome(st){                                   // unstable/thin -> don't auto-center
+  if(st.S<50||st.indep<2)return "unresolved";
+  return st.D>=0.45?"revised":"disputed";                     // one side clearly outweighs -> revised, else disputed
+}
+function startReconcile(ni,scenario){
+  const items=RECON_SCENARIOS[scenario].items, st=computeStability(items);
+  reconcile={ni,scenario,ran:true,items,st,outcome:decideOutcome(st)};
+  render();renderReadout();
+}
+function drawReconcile(root){
+  const r=reconcile;if(!r||!r.ran||r.ni!==SEL)return;
+  const d=DATA.find(x=>x.ni===r.ni);if(!d)return;
+  root.appendChild(el("rect",{x:0,y:0,width:600,height:600,fill:"var(--panel)","fill-opacity":.62}));
+  root.appendChild(el("circle",{cx:CX,cy:CY,r:RP,fill:"none",stroke:"var(--rim)","stroke-opacity":.5,"stroke-width":1}));
+  root.appendChild(el("circle",{cx:CX,cy:CY,r:6,fill:"var(--accent)"}));       // Z0 = query premise
+  const np=G(d.cen), ang=Math.atan2(d.cen.im,d.cen.re), wp=G({re:1.32*Math.cos(ang),im:1.32*Math.sin(ang)});
+  root.appendChild(el("path",{d:`M ${np.x} ${np.y} Q ${(np.x+wp.x)/2+14} ${(np.y+wp.y)/2} ${wp.x} ${wp.y}`,
+    fill:"none",stroke:"var(--muted)","stroke-width":1.4,"stroke-dasharray":"4 4"}));
+  r.items.forEach((it,i)=>{const a=ang+(i-(r.items.length-1)/2)*0.34, ep=G({re:1.55*Math.cos(a),im:1.55*Math.sin(a)});
+    root.appendChild(el("line",{x1:wp.x,y1:wp.y,x2:ep.x,y2:ep.y,stroke:it.model?"var(--c-anti)":"var(--muted)",
+      "stroke-width":1,"stroke-opacity":.65,"stroke-dasharray":(it.cites&&it.cites.length)?"2 3":"none"}));
+    root.appendChild(el("circle",{cx:ep.x,cy:ep.y,r:4,fill:it.stance==="oppose"?"var(--c-open)":"var(--c-stale)",
+      stroke:"var(--panel)","stroke-width":1}));});
+  const lab=(txt,x,y,col,sz)=>{const t=el("text",{x,y,"text-anchor":"middle","font-size":sz||11,"font-weight":700,
+    "font-family":"var(--mono)",fill:col});t.textContent=txt;root.appendChild(t);};
+  if(r.outcome==="revised"){
+    root.appendChild(el("circle",{cx:np.x,cy:np.y,r:6,fill:"none",stroke:"var(--muted)","stroke-width":1.5}));
+    root.appendChild(el("line",{x1:np.x-6,y1:np.y+6,x2:np.x+6,y2:np.y-6,stroke:"var(--muted)","stroke-width":1.5}));
+    const cp=G({re:0.16*Math.cos(ang),im:0.16*Math.sin(ang)});
+    root.appendChild(el("line",{x1:np.x,y1:np.y,x2:cp.x,y2:cp.y,stroke:"var(--c-robust)","stroke-width":2}));
+    root.appendChild(el("circle",{cx:cp.x,cy:cp.y,r:6.5,fill:"var(--c-robust)",stroke:"var(--panel)","stroke-width":1.5}));
+    lab("REVISED",CX,CY+RP+42,"var(--c-robust)");
+  }else if(r.outcome==="disputed"){
+    const A=G({re:-0.42,im:0.2}),B=G({re:0.42,im:0.2});
+    root.appendChild(el("circle",{cx:A.x,cy:A.y,r:6.5,fill:"var(--c-open)",stroke:"var(--panel)","stroke-width":1.5}));
+    root.appendChild(el("circle",{cx:B.x,cy:B.y,r:6.5,fill:"var(--c-stale)",stroke:"var(--panel)","stroke-width":1.5}));
+    root.appendChild(el("line",{x1:A.x,y1:A.y-11,x2:B.x,y2:B.y-11,stroke:"var(--c-anti)","stroke-width":1.5}));
+    root.appendChild(el("line",{x1:A.x,y1:A.y-8,x2:B.x,y2:B.y-8,stroke:"var(--c-anti)","stroke-width":1.5}));
+    lab("DISPUTED · both retained",CX,CY+RP+42,"var(--c-stale)");
+  }else{
+    root.appendChild(el("circle",{cx:np.x,cy:np.y,r:6.5,fill:"none",stroke:"var(--muted)","stroke-width":1.6,"stroke-dasharray":"3 3"}));
+    const qp=G({re:1.52*Math.cos(ang),im:1.52*Math.sin(ang)});
+    lab("?",qp.x,qp.y+4,"var(--muted)",15);
+    lab("UNRESOLVED",CX,CY+RP+42,"var(--muted)");
+  }
+}
+/* --- cluster / broadband matching: one shared context (a common matching network) for many notes ---
+   A "context add" here = nudging the query vector toward a concept direction; we search a few candidate
+   directions (each concept axis + the cluster's own common ground) and keep the one that best pulls the
+   whole cluster inward under a ROBUST objective — help the WORST note + coverage, not a lying centroid. */
+function clMeanDir(idx){const d=new Array(AXES.length).fill(0);
+  idx.forEach(i=>NOTES[i].w.forEach((x,j)=>d[j]+=x));return norm(d);}
+function afterCentroid(note,paras,dvec,beta){let sre=0,sim=0,sm=0;const K=paras.length;
+  for(const p of paras){const p2=norm(p.map((x,j)=>x+beta*dvec[j]));const g=gammaFor(dot(p2,note.w),note);
+    sre+=g.re;sim+=g.im;sm+=mag(g);}
+  return {cen:{re:sre/K,im:sim/K},meanAbs:sm/K};}
+function findCommonMatch(){
+  const idx=[...clusterSet];if(idx.length<2){clusterResult=null;return;}
+  const paras=paraphrases(QUERIES[QI].w,1000+QI*7),beta=clStrength,cands=[];
+  for(let j=0;j<AXES.length;j++){const d=new Array(AXES.length).fill(0);d[j]=1;cands.push({name:`domain qualifier: “${AXES[j]}”`,d});}
+  cands.push({mean:true,d:clMeanDir(idx)});
+  let best=null;
+  for(const c of cands){
+    const per=idx.map(i=>({i,...afterCentroid(NOTES[i],paras,c.d,beta)}));
+    const m=per.map(p=>p.meanAbs),worst=Math.max(...m),mean=m.reduce((a,b)=>a+b,0)/m.length,
+      cov=m.filter(v=>v<=0.5).length/m.length,score=-0.5*worst-0.3*mean+0.6*cov;
+    if(!best||score>best.score)best={score,c,per};
+  }
+  const before=idx.map(i=>{const d=DATA.find(x=>x.ni===i);return {i,meanAbs:d.meanAbs,cen:d.cen};});
+  const bMean=before.reduce((s,b)=>s+b.meanAbs,0)/before.length,
+        aMean=best.per.reduce((s,p)=>s+p.meanAbs,0)/best.per.length,
+        bWorst=Math.max(...before.map(b=>b.meanAbs)),aWorst=Math.max(...best.per.map(p=>p.meanAbs));
+  let worse=0,exposed=0;
+  best.per.forEach(p=>{const b=before.find(x=>x.i===p.i);
+    if(p.meanAbs>b.meanAbs+1e-3)worse++;if(p.meanAbs>1&&b.meanAbs<=1)exposed++;});
+  let name=best.c.name;
+  if(best.c.mean){const top=best.c.d.map((x,j)=>[x,j]).sort((a,b)=>b[0]-a[0]).slice(0,2).map(t=>AXES[t[1]]);
+    name=`shared context: “${top[0]} + ${top[1]}”`;}
+  clusterResult={idx,name,beta,before,after:best.per,bMean,aMean,bWorst,aWorst,worse,exposed};
+}
+function drawCluster(root){
+  if(!clusterSet.size)return;
+  clusterSet.forEach(i=>{const d=DATA.find(x=>x.ni===i);if(!d)return;const c=G(d.cen);
+    root.appendChild(el("circle",{cx:c.x,cy:c.y,r:12,fill:"none",stroke:"var(--accent)","stroke-opacity":.55,
+      "stroke-dasharray":"2 3","stroke-width":1.3}));});
+  if(clusterResult){
+    clusterResult.after.forEach(p=>{const b=clusterResult.before.find(x=>x.i===p.i);
+      const from=G(b.cen),to=G(p.cen),improved=p.meanAbs<=b.meanAbs+1e-3,col=improved?"var(--c-robust)":"var(--c-anti)";
+      root.appendChild(el("line",{x1:from.x,y1:from.y,x2:to.x,y2:to.y,stroke:col,"stroke-width":2,"stroke-opacity":.85}));
+      root.appendChild(el("circle",{cx:to.x,cy:to.y,r:4.6,fill:col,stroke:"var(--panel)","stroke-width":1.5}));});
+  }
+}
+function renderClusterResult(){
+  const box=document.getElementById("clresult"),btn=document.getElementById("clfind");
+  btn.disabled=clusterSet.size<2;
+  document.getElementById("clhint").textContent=clusterSet.size<2
+    ? "Tick 2+ notes in the table below, then find the single shared context that pulls the whole cluster toward center at once."
+    : `${clusterSet.size} notes in cluster — find the one context that best pulls them in.`;
+  if(!clusterResult){box.innerHTML="";return;}
+  const r=clusterResult,pill=(a,b)=>`${b.toFixed(2)} → <b style="color:${a<=b?'var(--c-robust)':'var(--c-anti)'}">${a.toFixed(2)}</b>`;
+  box.innerHTML=`<div class="recipe"><div class="rk">Common match · ${r.name}</div>
+    <ul class="rlist">
+      <li>Median fit |Γ|: ${pill(r.aMean,r.bMean)}</li>
+      <li>Worst-case note: ${pill(r.aWorst,r.bWorst)}</li>
+      ${r.worse?`<li style="color:var(--c-anti)">⚠ ${r.worse} note(s) worsened — no free lunch</li>`:`<li>No note worsened ✓ diversity kept</li>`}
+      ${r.exposed?`<li style="color:var(--c-anti)">⚠ ${r.exposed} contradiction pushed past the rim</li>`:``}
+    </ul>
+    <p class="rp">Arrows on the chart trace each note's before→after move under this one shared context (β=${r.beta.toFixed(2)}).</p></div>`;
+}
+function buildMatch(){const d=DATA.find(x=>x.ni===SEL);matchPath=d?computeMatch(d.cen):null;}
+function drawMatch(root){
+  if(!showMatch||!matchPath||!matchPath.feasible||!matchPath.arcs.length)return;
+  matchPath.arcs.forEach(a=>{
+    const pts=arcPts(a,28);
+    root.appendChild(el("path",{d:"M "+pts.map(p=>p.x.toFixed(1)+" "+p.y.toFixed(1)).join(" L "),
+      fill:"none",stroke:"var(--accent)","stroke-width":2.4,"stroke-dasharray":"5 4","stroke-opacity":.92,"stroke-linecap":"round"}));
+    root.appendChild(el("circle",{cx:pts[0].x,cy:pts[0].y,r:3.2,fill:"var(--accent)"}));
+    const mid=pts[Math.floor(pts.length/2)];
+    const t=el("text",{x:mid.x,y:mid.y-7,"text-anchor":"middle","font-size":10.5,"font-weight":600,
+      "font-family":"var(--mono)",fill:"var(--accent)"});t.textContent=(a.series?"series ":"shunt ")+a.comp;
+    root.appendChild(t);
+  });
+  if(tuneT!=null){const p=matchPos(tuneT);
+    root.appendChild(el("circle",{cx:p.x,cy:p.y,r:6.5,fill:"var(--accent)",stroke:"var(--panel)","stroke-width":2}));}
+}
+
+function drawGridInto(root){
+  // anti-relevant halo (|Γ|>1)
+  if(showAnti){
+    root.appendChild(el("circle",{cx:CX,cy:CY,r:RP*1.28,fill:"var(--c-anti)","fill-opacity":.05,stroke:"none"}));
+    root.appendChild(el("circle",{cx:CX,cy:CY,r:RP*1.28,fill:"none",stroke:"var(--c-anti)","stroke-opacity":.35,"stroke-dasharray":"2 5","stroke-width":1}));
+  }
+  const clip=el("clipPath",{id:"disk"});clip.appendChild(el("circle",{cx:CX,cy:CY,r:RP}));root.appendChild(clip);
+  if(showGrid){
+    const gg=el("g",{"clip-path":"url(#disk)",fill:"none",stroke:"var(--grid)","stroke-width":1});
+    // constant-R circles: center (R/(R+1),0), radius 1/(R+1)
+    [0.3,0.6,1,2,4].forEach(R=>{const rr=RP/(R+1);gg.appendChild(el("circle",{cx:CX+RP*(R/(R+1)),cy:CY,r:rr}));});
+    // constant-X arcs: center (1, 1/X), radius 1/|X|
+    [0.3,0.6,1,2].forEach(X=>{const rr=RP/X;
+      gg.appendChild(el("circle",{cx:CX+RP,cy:CY-RP/X,r:rr}));
+      gg.appendChild(el("circle",{cx:CX+RP,cy:CY+RP/X,r:rr}));});
+    root.appendChild(gg);
+    // real axis
+    root.appendChild(el("line",{x1:CX-RP,y1:CY,x2:CX+RP,y2:CY,stroke:"var(--grid)","stroke-width":1}));
+  }
+  // unit circle (rim)
+  root.appendChild(el("circle",{cx:CX,cy:CY,r:RP,fill:"none",stroke:"var(--rim)","stroke-width":1.5}));
+  // axis labels
+  const lab=(x,y,t,anchor,cls)=>{const e=el("text",{x,y,"text-anchor":anchor||"middle","font-size":cls==="big"?13:11,
+    "font-family":"var(--mono)",fill:"var(--muted)"});e.textContent=t;root.appendChild(e);};
+  lab(CX,CY-RP-9,"inductive +jX  ·  stale");
+  lab(CX,CY+RP+18,"capacitive −jX  ·  unresolved");
+  lab(CX+RP+6,CY-6,"open",("start"));
+  lab(CX+RP+6,CY+13,"|Γ|=1","start");
+  lab(CX-RP-6,CY-6,"short","end");
+}
+function marker(root,d,active){
+  const c=G(d.cen), col=TCOL[d.type];
+  // locus trail
+  if(showTrail){
+    let path="M "+d.loc.map(g=>{const p=G(g);return p.x.toFixed(1)+" "+p.y.toFixed(1);}).join(" L ");
+    root.appendChild(el("path",{d:path,fill:"none",stroke:col,"stroke-width":active?2:1.1,
+      "stroke-opacity":active?.9:.32,"stroke-linejoin":"round","stroke-linecap":"round"}));
+    d.loc.forEach(g=>{const p=G(g);root.appendChild(el("circle",{cx:p.x,cy:p.y,r:active?2.1:1.4,fill:col,
+      "fill-opacity":active?.8:.3}));});
+  }
+  // active paraphrase point
+  const ap=G(d.loc[PARA]);
+  root.appendChild(el("circle",{cx:ap.x,cy:ap.y,r:active?6:4,fill:col,"fill-opacity":active?1:.55,
+    stroke:"var(--panel)","stroke-width":1.5}));
+  // centroid marker + label
+  if(active){
+    root.appendChild(el("circle",{cx:c.x,cy:c.y,r:9,fill:"none",stroke:col,"stroke-width":2}));
+  }
+  const idx=el("text",{x:ap.x, y:ap.y-9, "text-anchor":"middle","font-size":10,"font-weight":600,
+    "font-family":"var(--mono)",fill:col});idx.textContent=(d.ni+1);
+  if(active) root.appendChild(idx);
+}
+function render(){
+  while(chart.firstChild)chart.removeChild(chart.firstChild);
+  const base=el("g",{});chart.appendChild(base);
+  drawGridInto(base);
+  drawMatch(base);                                                                       // L-match path under markers
+  drawCluster(base);                                                                     // cluster rings + before/after arrows
+  if(mode==="age"){                                                                      // expiry ring: past it, revalidate before use
+    base.appendChild(el("circle",{cx:CX,cy:CY,r:RP*0.6,fill:"none",stroke:"var(--c-stale)",
+      "stroke-opacity":.6,"stroke-dasharray":"3 4","stroke-width":1.3}));
+    const et=el("text",{x:CX,y:CY-RP*0.6-5,"text-anchor":"middle","font-size":10,
+      "font-family":"var(--mono)",fill:"var(--c-stale)"});et.textContent="revalidate beyond here";base.appendChild(et);
+  }
+  const glow=el("circle",{cx:CX,cy:CY,r:7,fill:"var(--accent)","fill-opacity":.9});    // Z0 center
+  // draw non-selected first, selected last (on top)
+  DATA.forEach(d=>{if(d.ni!==SEL)marker(base,d,false);});
+  base.appendChild(glow);
+  const sd=DATA.find(d=>d.ni===SEL); if(sd)marker(base,sd,true);
+  drawReconcile(base);                                                                   // contradiction overlay (on top)
+  if(mode==="age"){
+    const off=Math.round(DAY_MIN+(DAY_MAX-DAY_MIN)*PARA/(N_AGE-1));
+    const rel=off===0?"today":(off>0?`+${off}d`:`${off}d`);
+    document.getElementById("cap").textContent=`as-of ${rel} · aging drift · Z₀ = query ${QI+1}`;
+    document.getElementById("pval").textContent=rel;
+  }else{
+    document.getElementById("cap").textContent=`paraphrase ${String(PARA+1).padStart(2,"0")} / ${N_PARA} · reference Z₀ = query ${QI+1}`;
+    document.getElementById("pval").textContent=`${String(PARA+1).padStart(2,"0")}/${N_PARA}`;
+  }
+}
+function fmt(x){return x.toFixed(2);}
+function renderTable(){
+  const rows=document.getElementById("rows");rows.innerHTML="";
+  [...DATA].sort((a,b)=>b.robust-a.robust).forEach(d=>{
+    const tr=document.createElement("tr");tr.className="noterow"+(d.ni===SEL?" sel":"");tr.tabIndex=0;
+    const vswr=d.vswr===Infinity?"∞":d.vswr.toFixed(1)+":1";
+    const ck=clusterSet.has(d.ni)?"checked":"";
+    tr.innerHTML=`<td class="chk"><input type="checkbox" class="clchk" data-ni="${d.ni}" ${ck} aria-label="add note ${d.ni+1} to cluster"></td>
+      <td><div class="nt"><span class="dot" style="background:${TCOL[d.type]}"></span>
+        <span class="tx">${d.ni+1}. ${d.note.t}</span></div></td>
+      <td class="num mono">${fmt(d.meanAbs)}</td>
+      <td class="num mono">${vswr}</td>
+      <td><div class="bar"><i style="width:${(d.robust*100).toFixed(0)}%;background:${TCOL[d.type]}"></i></div></td>
+      <td><div class="bar"><i style="width:${(d.sens*100).toFixed(0)}%;background:var(--muted)"></i></div></td>
+      <td><span class="tag" style="color:${TCOL[d.type]}">${d.label}</span></td>`;
+    tr.onclick=()=>{if(SEL!==d.ni)reconcile=null;SEL=d.ni;buildMatch();render();renderTable();renderReadout();};
+    tr.onkeydown=(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tr.onclick();}};
+    const cb=tr.querySelector(".clchk");
+    cb.onclick=(e)=>{e.stopPropagation();};
+    cb.onchange=(e)=>{const ni=+e.target.dataset.ni;
+      if(e.target.checked)clusterSet.add(ni);else clusterSet.delete(ni);
+      clusterResult=null;render();renderClusterResult();};
+    rows.appendChild(tr);
+  });
+}
+function renderReadout(){
+  const d=DATA.find(x=>x.ni===SEL);const r=document.getElementById("readout");
+  const vswr=d.vswr===Infinity?"∞":d.vswr.toFixed(1)+":1";
+  const verdicts={
+    robust:"Sits near the center across almost every phrasing — impedance-matched. Retrieve with confidence.",
+    stale:"Lands on-topic but drifts into the inductive (upper) half: the content is relevant yet aging.",
+    open:"Pulled into the capacitive (lower) half — relevant but an unresolved, open question.",
+    off:"Parks near the rim: the query's energy reflects off it. Mostly irrelevant here.",
+    anti:"Escapes past the rim into negative resistance — it contradicts the query. Suppress, don't surface."
+  };
+  let rec="";
+  if(matchPath){
+    if(!matchPath.feasible){
+      rec=`<div class="recipe"><div class="rk">Matching recipe</div><p class="rp">${matchPath.reason}.</p></div>`;
+    }else if(matchPath.nmoves===0){
+      rec=`<div class="recipe"><div class="rk">Matching recipe</div><p class="rp">Already at the center — surfaces matched, no tuning needed.</p></div>`;
+    }else{
+      const items=matchPath.arcs.map((a,i)=>`<li><span class="rn">${i+1}</span><span class="rc">${a.series?"Series":"Shunt"} ${a.comp}</span><span class="ro">${a.op}</span></li>`).join("");
+      rec=`<div class="recipe"><div class="rk">Matching recipe · ${matchPath.nmoves} moves to center</div>
+        <ol class="rlist">${items}</ol><button class="tune" id="tune" type="button">▷ Tune to match</button></div>`;
+    }
+  }
+  if(d.type==="anti"){
+    const opened=reconcile&&reconcile.ni===d.ni&&reconcile.ran;
+    rec+=`<div class="recipe"><div class="rk">Reconcile contradiction</div>
+      <p class="rp"><b>Claim:</b> ${d.note.t}</p>
+      <p class="rp"><b>Conflicts with:</b> the current query premise. <b>Why outside the rim:</b> negative resistance — it argues against a query assumption, so no passive context tunes it in.</p>
+      <div class="field" style="margin-top:10px"><label class="lb" for="scen">Evidence scenario</label>
+        <select id="scen">
+          <option value="revised">strong counter-evidence</option>
+          <option value="disputed">credible on both sides</option>
+          <option value="unresolved">echo chamber / thin</option>
+        </select></div>
+      <button class="tune" id="recRun" type="button">▷ Run reconciliation</button>`;
+    if(opened){
+      const st=reconcile.st,o=reconcile.outcome,
+        bd={revised:["REVISED","var(--c-robust)"],disputed:["DISPUTED","var(--c-stale)"],unresolved:["UNRESOLVED","var(--muted)"]}[o],
+        sb=st.S>=75?"Stable":st.S>=50?"Guarded":st.S>=25?"Unstable":"Oscillation risk";
+      rec+=`<div style="margin-top:13px"><div class="rk">Outcome</div>
+        <p class="rp"><span class="tag" style="color:${bd[1]}">${bd[0]}</span></p>
+        <div class="metric" style="margin-top:8px"><div class="k">stability margin</div>
+          <div class="v" style="color:${st.S>=50?'var(--c-robust)':'var(--c-anti)'}">${st.S} / 100 · ${sb}</div>
+          <div class="k" style="margin-top:5px">${st.indep} independent clusters · provenance ${(st.P*100).toFixed(0)}% · feedback-safety ${(st.F*100).toFixed(0)}%</div></div>
+        <ul class="rlist" style="margin-top:11px">${reconcile.items.map(it=>`<li><span class="rc" style="color:${it.stance==='oppose'?'var(--c-open)':'var(--c-stale)'}">${it.stance}</span><span class="ro">${it.cluster}${it.model?' · ⚠ model-gen':''}${(it.cites&&it.cites.length)?' · cites loop':''}</span></li>`).join("")}</ul></div>`;
+    }
+    rec+=`</div>`;
+  }
+  r.innerHTML=`<p class="name" style="color:${TCOL[d.type]}">${d.ni+1}. ${d.note.t}</p>
+    <p class="verdict">${verdicts[d.type]}</p>
+    <div class="metrics">
+      <div class="metric"><div class="k">resonance min|Γ|</div><div class="v">${fmt(d.minAbs)}</div></div>
+      <div class="metric"><div class="k">mean fit |Γ|</div><div class="v">${fmt(d.meanAbs)}</div></div>
+      <div class="metric"><div class="k">VSWR</div><div class="v">${vswr}</div></div>
+      <div class="metric"><div class="k">robustness</div><div class="v">${(d.robust*100).toFixed(0)}%</div></div>
+      <div class="metric"><div class="k">sensitivity Q</div><div class="v">${(d.sens*100).toFixed(0)}%</div></div>
+      <div class="metric"><div class="k">age</div><div class="v">${d.note.age}d</div></div>
+    </div>${rec}`;
+  const scenSel=document.getElementById("scen");
+  if(scenSel){scenSel.value=(reconcile&&reconcile.ni===d.ni)?reconcile.scenario:"revised";
+    scenSel.onchange=()=>startReconcile(d.ni,scenSel.value);}
+  const runBtn=document.getElementById("recRun");
+  if(runBtn)runBtn.onclick=()=>startReconcile(d.ni,document.getElementById("scen").value);
+  const tb=document.getElementById("tune");
+  if(tb)tb.onclick=()=>{if(tuneTimer)clearInterval(tuneTimer);tuneT=0;const st=reduce?0.34:0.028;
+    tuneTimer=setInterval(()=>{tuneT+=st;if(tuneT>=1){tuneT=1;clearInterval(tuneTimer);tuneTimer=null;
+      render();setTimeout(()=>{tuneT=null;render();},800);return;}render();},reduce?260:28);};
+}
+function recompute(){DATA=(mode==="age"?computeAging(QI):computeQuery(QI));if(SEL>=DATA.length)SEL=0;clusterResult=null;reconcile=null;buildMatch();render();renderTable();renderReadout();renderClusterResult();}
+
+/* ---------- controls ---------- */
+const qSel=document.getElementById("q");
+QUERIES.forEach((q,i)=>{const o=document.createElement("option");o.value=i;o.textContent=q.name;qSel.appendChild(o);});
+qSel.onchange=()=>{QI=+qSel.value;PARA=0;document.getElementById("sweep").value=0;recompute();};
+const sweep=document.getElementById("sweep");
+sweep.oninput=()=>{PARA=+sweep.value;render();};
+function bindTog(id,set){const cb=document.getElementById(id);cb.onchange=()=>{set(cb.checked);
+  cb.closest(".tg").classList.toggle("on",cb.checked);render();};}
+bindTog("tGrid",v=>showGrid=v);bindTog("tTrail",v=>showTrail=v);bindTog("tAnti",v=>showAnti=v);
+bindTog("tMatch",v=>showMatch=v);
+
+const clbeta=document.getElementById("clbeta");
+clbeta.oninput=()=>{clStrength=+clbeta.value;document.getElementById("clbval").textContent=clStrength.toFixed(2);
+  if(clusterResult){findCommonMatch();render();renderClusterResult();}};
+document.getElementById("clfind").onclick=()=>{findCommonMatch();render();renderClusterResult();};
+
+const modeSel=document.getElementById("mode");
+modeSel.onchange=()=>{mode=modeSel.value;
+  if(mode==="age"){sweep.max=N_AGE-1;PARA=TODAY_IDX;
+    document.getElementById("sweeplb").textContent="Aging (as-of date)";document.getElementById("revalrow").hidden=false;}
+  else{sweep.max=N_PARA-1;PARA=0;
+    document.getElementById("sweeplb").textContent="Paraphrase sweep";document.getElementById("revalrow").hidden=true;}
+  sweep.value=PARA;recompute();};
+document.getElementById("reval").onclick=()=>{
+  const off=DAY_MIN+(DAY_MAX-DAY_MIN)*PARA/(N_AGE-1);
+  NOTES.forEach(n=>{n.age=-off;});          // re-validate every note at the current as-of date -> staleness 0 there
+  recompute();};
+
+let timer=null;const playBtn=document.getElementById("play");
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+playBtn.onclick=()=>{
+  if(timer){clearInterval(timer);timer=null;playBtn.textContent="▶ Play";return;}
+  playBtn.textContent="❚❚ Stop";
+  timer=setInterval(()=>{PARA=(PARA+1)%(+sweep.max+1);sweep.value=PARA;render();},reduce?600:280);
+};
+
+/* ============================ RETRIEVAL TDR — reflectogram of answer construction ============================
+   Send a query "impulse" down a retrieval route; each hop emits a signed reflection Γ_h (up = evidence/
+   inference break, down = rejected/repeated work) at cumulative cost τ. Debugs WHERE answer-building fails,
+   not which doc ranks. Synthetic demo data. Formulas + routes per the build spec. */
+const TDR_Q="Does City X's congestion charge reduce traffic — and is it still in force?";
+const KIND_MS={parse:60,decompose:80,entity_resolve:140,retrieve:210,define:110,bridge:270,verify:220,currentness_check:120,cite:90,synthesize:150,terminal:60};
+function hop(kind,shortLabel,commitment,ov){return Object.assign({kind,shortLabel,commitment,
+  entityClarity:.92,evidenceCoverage:.9,entailment:.9,bridgeSupport:.9,sourceAgreement:.9,currentness:.9,
+  provenanceQuality:.88,citationCoverage:.9,citationAttached:true,novelty:1,loopRisk:0,verificationPass:.95,
+  contradiction:.05,retryCount:0},ov||{});}
+const TDR_ROUTES=[
+ {name:"Clean grounded route",hops:[
+   hop("parse","Parse","Split into: reduces-traffic? + still-in-force?"),
+   hop("entity_resolve","Resolve entity","Identify which City X"),
+   hop("retrieve","Retrieve policy","Find the congestion-charge policy"),
+   hop("bridge","Causal bridge","Link the charge to a traffic reduction"),
+   hop("currentness_check","Currentness","Confirm the charge is still in force"),
+   hop("cite","Cite","Attach supporting sources"),
+   hop("terminal","Answer","Deliver a grounded answer")]},
+ {name:"Ambiguous premise",hops:[
+   hop("parse","Parse","Split the question"),
+   hop("entity_resolve","Resolve entity","Which City X? — ambiguous",{entityClarity:.26,retryCount:1}),
+   hop("retrieve","Retrieve policy","Find the policy"),
+   hop("bridge","Causal bridge","Link charge to traffic"),
+   hop("currentness_check","Currentness","Confirm still in force"),
+   hop("cite","Cite","Attach sources"),
+   hop("terminal","Answer","Answer — but which city?",{verificationPass:.6})]},
+ {name:"Missing causal bridge",hops:[
+   hop("parse","Parse","Split the question"),
+   hop("entity_resolve","Resolve entity","Identify City X"),
+   hop("define","Define policy","Definition of the charge"),
+   hop("bridge","Causal bridge","Link charge to traffic — unsupported",{bridgeSupport:.2,evidenceCoverage:.8}),
+   hop("currentness_check","Currentness","Confirm still in force"),
+   hop("cite","Cite","Cite the causal claim",{citationAttached:false,citationCoverage:.3}),
+   hop("terminal","Answer","Answer with a weak link",{verificationPass:.55})]},
+ {name:"Echo-chamber loop",hops:[
+   hop("parse","Parse","Split the question"),
+   hop("entity_resolve","Resolve entity","Identify City X"),
+   hop("retrieve","Retrieve","Find sources",{novelty:.5}),
+   hop("retrieve","Re-retrieve","Same source cluster again",{loopRisk:.82,novelty:.1}),
+   hop("bridge","Causal bridge","Link charge to traffic",{sourceAgreement:.32,contradiction:.5,bridgeSupport:.45}),
+   hop("verify","Verify","Cross-check — circular",{verificationPass:.3,loopRisk:.7,novelty:.15}),
+   hop("terminal","Answer","Unresolved",{verificationPass:.28})]},
+];
+function gammaForHop(h){
+  const pos=0.20*(1-h.entityClarity)+0.20*(1-h.evidenceCoverage)+0.18*(1-h.entailment)+0.18*(1-h.bridgeSupport)
+    +0.10*(1-h.sourceAgreement)+0.08*(1-h.currentness)+0.04*(1-h.provenanceQuality)+0.02*(1-h.citationCoverage);
+  const neg=0.55*h.loopRisk+0.25*(1-h.novelty)+0.20*((h.kind==="terminal"&&h.verificationPass<0.5)?1:0);
+  return Math.max(-1,Math.min(1,pos-neg));
+}
+function classifyFault(h){
+  if(h.loopRisk>=0.65)return "loop";
+  if(h.novelty<=0.20)return "duplicate_retrieval";
+  if(h.entityClarity<0.45)return "entity_ambiguity";
+  if(h.evidenceCoverage<0.45)return "missing_evidence";
+  if(h.bridgeSupport<0.45&&h.evidenceCoverage>=0.60)return "missing_causal_bridge";
+  if(h.contradiction>=0.45||h.sourceAgreement<0.45)return "source_conflict";
+  if(h.currentness<0.45)return "temporal_uncertainty";
+  if(!h.citationAttached||h.citationCoverage<0.60)return "citation_gap";
+  if(h.verificationPass<0.45)return "dead_end";
+  return "none";
+}
+const REMED={
+  loop:["Break the loop — require an independent source cluster","loopRisk"],
+  duplicate_retrieval:["Retrieve from a new source cluster","novelty"],
+  entity_ambiguity:["Add entity disambiguation / an alias","entityClarity"],
+  missing_evidence:["Broaden retrieval for direct evidence","evidenceCoverage"],
+  missing_causal_bridge:["Find a bridging source for the causal link ([[link]])","bridgeSupport"],
+  source_conflict:["Adjudicate — add an independent source","sourceAgreement"],
+  temporal_uncertainty:["Run a currentness check / re-date","currentness"],
+  citation_gap:["Attach a citation covering the claim","citation"],
+  dead_end:["Split the question / escalate to review","verificationPass"],
+  none:["No fix needed",""],
+};
+const DIAG={loop:"Retrieval is circular — sources reinforce each other.",
+  duplicate_retrieval:"Repeated retrieval from the same cluster — no new evidence.",
+  entity_ambiguity:"The entity in the premise is ambiguous.",
+  missing_evidence:"Required factual support was not found.",
+  missing_causal_bridge:"Definition found, but no source supports the causal link.",
+  source_conflict:"Independent sources disagree.",
+  temporal_uncertainty:"Evidence may be out of date.",
+  citation_gap:"A claim is unsupported by an attached citation.",
+  dead_end:"Final verification did not pass.",none:"Clean route — grounded."};
+function tauForHop(h){return 30+(KIND_MS[h.kind]||120)+25*(h.retryCount||0);}
+function sevCol(g){const a=Math.abs(g);return a<0.2?"var(--c-robust)":a<0.45?"var(--c-stale)":"var(--c-anti)";}
+function computeRoute(hops){
+  let cum=0;const out=hops.map(h=>{const g=gammaForHop(h),t=tauForHop(h);cum+=t;
+    return Object.assign({},h,{gamma:g,tau:t,cum,fault:classifyFault(h)});});
+  const rms=Math.sqrt(out.reduce((s,h)=>s+h.gamma*h.gamma,0)/out.length);
+  const RL=-20*Math.log10(Math.max(1e-3,Math.min(1,rms||1e-3)));
+  const largest=out.reduce((a,b)=>Math.abs(b.gamma)>Math.abs(a.gamma)?b:a,out[0]);
+  const hasLoop=out.some(h=>h.fault==="loop"),term=out[out.length-1],material=out.filter(h=>Math.abs(h.gamma)>=0.45);
+  const status=hasLoop?"Circular / unresolved":(term.verificationPass<0.5?"Blocked":(material.length?"Needs repair":"Grounded"));
+  const req=out.filter(h=>["retrieve","define","bridge","cite"].includes(h.kind));
+  const cited=req.filter(h=>h.citationAttached&&h.citationCoverage>=0.6);
+  return {hops:out,maxT:cum,RL,largest,status,cited:cited.length,req:req.length,diagnosis:DIAG[largest.fault]||DIAG.none};
+}
+let tdrRoute=0,tdrHops=null,tdrSel=-1,tdrReveal=Infinity,tdrTimer=null,tdrData=null;
+function loadRoute(i){tdrRoute=(i+TDR_ROUTES.length)%TDR_ROUTES.length;
+  tdrHops=TDR_ROUTES[tdrRoute].hops.map(h=>Object.assign({},h));tdrSel=-1;tdrReveal=Infinity;recomputeTDR();}
+function recomputeTDR(){tdrData=computeRoute(tdrHops);
+  document.getElementById("rlabel").textContent=`Route ${tdrRoute+1} / ${TDR_ROUTES.length}`;
+  document.getElementById("tdrq").textContent="“"+TDR_Q+"”  ·  "+TDR_ROUTES[tdrRoute].name;
+  renderTDR();}
+function applyFix(idx){const h=tdrHops[idx],f=classifyFault(h),dim=(REMED[f]||REMED.none)[1];
+  if(dim==="citation"){h.citationAttached=true;h.citationCoverage=.92;}
+  else if(dim==="loopRisk"){h.loopRisk=0;h.novelty=1;}
+  else if(dim==="sourceAgreement"){h.sourceAgreement=.9;h.contradiction=.05;}
+  else if(dim){h[dim]=.92;}
+  recomputeTDR();}
+function renderTDR(){
+  const svg=document.getElementById("tdr");if(!svg)return;while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=900,padL=48,padR=16,padT=18,padB=48,plotW=W-padL-padR,plotH=340-padT-padB,midY=padT+plotH/2,half=plotH/2;
+  const d=tdrData,maxT=d.maxT||1,xT=t=>padL+(t/maxT)*plotW,yG=g=>midY-g*half;
+  [1,.5,0,-.5,-1].forEach(g=>{const y=yG(g);
+    svg.appendChild(el("line",{x1:padL,y1:y,x2:W-padR,y2:y,stroke:g===0?"var(--rim)":"var(--grid)","stroke-width":g===0?1.4:1,"stroke-dasharray":g===0?"none":"2 4"}));
+    const t=el("text",{x:padL-6,y:y+3,"text-anchor":"end","font-size":10,"font-family":"var(--mono)",fill:"var(--muted)"});t.textContent=g>0?"+"+g:""+g;svg.appendChild(t);});
+  for(let k=1;k<8;k++){const x=padL+plotW*k/8;svg.appendChild(el("line",{x1:x,y1:padT,x2:x,y2:padT+plotH,stroke:"var(--grid)","stroke-opacity":.45,"stroke-width":1}));}
+  const xl=el("text",{x:padL+plotW/2,y:334,"text-anchor":"middle","font-size":10.5,"font-family":"var(--mono)",fill:"var(--muted)"});xl.textContent="cumulative retrieval + reasoning cost →";svg.appendChild(xl);
+  const yl=el("text",{x:14,y:padT+4,"font-size":11,"font-family":"var(--mono)",fill:"var(--muted)"});yl.textContent="Γ";svg.appendChild(yl);
+  svg.appendChild(el("circle",{cx:padL,cy:midY,r:5,fill:"var(--accent)"}));
+  const lt=el("text",{x:padL,y:midY+18,"text-anchor":"middle","font-size":9,"font-family":"var(--mono)",fill:"var(--accent)"});lt.textContent="impulse";svg.appendChild(lt);
+  d.hops.forEach((h,i)=>{if(h.cum>tdrReveal)return;const x=xT(h.cum),y=yG(h.gamma),col=sevCol(h.gamma),sel=i===tdrSel;
+    svg.appendChild(el("line",{x1:x,y1:midY,x2:x,y2:y,stroke:col,"stroke-width":sel?3:2}));
+    if(sel)svg.appendChild(el("circle",{cx:x,cy:y,r:10,fill:"none",stroke:col,"stroke-width":1.5,"stroke-opacity":.6}));
+    const dot=el("circle",{cx:x,cy:y,r:4+6*Math.abs(h.gamma),fill:col,stroke:"var(--panel)","stroke-width":1.4,style:"cursor:pointer"});
+    dot.addEventListener("click",()=>{tdrSel=i;renderTDR();});dot.addEventListener("mouseenter",()=>{tdrSel=i;renderTDR();});
+    svg.appendChild(dot);
+    const tk=el("text",{x:x,y:padT+plotH+14,"text-anchor":"middle","font-size":9,"font-family":"var(--mono)",fill:"var(--muted)"});tk.textContent=i+1;svg.appendChild(tk);});
+  const term=d.hops[d.hops.length-1];
+  if(term.cum<=tdrReveal){const x=xT(term.cum),y=yG(term.gamma),
+    sc=d.status==="Grounded"?"var(--c-robust)":d.status==="Needs repair"?"var(--c-stale)":"var(--c-anti)";
+    svg.appendChild(el("circle",{cx:x,cy:y,r:7,fill:sc,stroke:"var(--panel)","stroke-width":1.8}));}
+  if(tdrReveal!==Infinity){const x=xT(Math.min(tdrReveal,maxT));svg.appendChild(el("circle",{cx:x,cy:midY,r:4,fill:"var(--accent)","fill-opacity":.85}));}
+  renderRail();renderSummary();renderInspect();
+}
+function renderRail(){const rail=document.getElementById("rail");if(!rail)return;rail.innerHTML="";
+  tdrData.hops.forEach((h,i)=>{const c=document.createElement("span");c.className="chip"+(i===tdrSel?" sel":"");
+    const loop=(h.fault==="loop"||h.fault==="duplicate_retrieval")?" ↺":"";
+    c.innerHTML=`<span class="cdot" style="background:${sevCol(h.gamma)}"></span>${i+1} ${h.shortLabel}${loop}`;
+    c.onclick=()=>{tdrSel=i;renderTDR();};rail.appendChild(c);});}
+function renderSummary(){const s=document.getElementById("tdrsum");if(!s)return;const d=tdrData;
+  const sc=d.status==="Grounded"?"var(--c-robust)":d.status==="Needs repair"?"var(--c-stale)":"var(--c-anti)";
+  s.innerHTML=`<h2>Route summary</h2>
+    <div class="sumline"><span class="k">Status</span><span class="statusbadge" style="color:${sc}">${d.status}</span></div>
+    <div class="sumline"><span class="k">Path return loss</span><span class="v">${d.RL.toFixed(1)} dB</span></div>
+    <div class="sumline"><span class="k">Largest reflection</span><span class="v" style="color:${sevCol(d.largest.gamma)}">${d.largest.gamma>=0?"+":""}${d.largest.gamma.toFixed(2)} @ ${d.largest.shortLabel}</span></div>
+    <div class="sumline"><span class="k">Grounding</span><span class="v">${d.cited}/${d.req} claims cited</span></div>
+    <p class="rp" style="margin-top:11px">${d.diagnosis}</p>
+    <p class="cap" style="text-align:left;margin-top:6px">Higher dB = a cleaner route (less reflected work).</p>`;}
+function renderInspect(){const box=document.getElementById("tdrinspect");if(!box)return;
+  if(tdrSel<0){box.innerHTML=`<p class="hint">Hover or click a spike (or a chip) to inspect the fault and its fix.</p>`;return;}
+  const h=tdrData.hops[tdrSel],rem=REMED[h.fault]||REMED.none;
+  box.innerHTML=`<h2>Hop ${tdrSel+1} · ${h.shortLabel}</h2>
+    <p class="rp"><b>Commitment:</b> ${h.commitment}</p>
+    <div class="metrics" style="margin-top:8px">
+      <div class="metric"><div class="k">reflection Γ</div><div class="v" style="color:${sevCol(h.gamma)}">${h.gamma>=0?"+":""}${h.gamma.toFixed(2)}</div></div>
+      <div class="metric"><div class="k">cost τ</div><div class="v">${Math.round(h.tau)}ms</div></div>
+      <div class="metric"><div class="k">fault</div><div class="v" style="font-size:12px">${h.fault.replace(/_/g," ")}</div></div>
+    </div>
+    <div class="recipe"><div class="rk">Remediation</div><p class="rp">${rem[0]}</p>
+    ${h.fault!=="none"?`<button class="tune" id="tdrfix" type="button">▷ Apply fix</button>`:""}</div>`;
+  const fb=document.getElementById("tdrfix");if(fb)fb.onclick=()=>applyFix(tdrSel);}
+document.getElementById("rprev").onclick=()=>loadRoute(tdrRoute-1);
+document.getElementById("rnext").onclick=()=>loadRoute(tdrRoute+1);
+const rplay=document.getElementById("rplay");
+rplay.onclick=()=>{if(tdrTimer){clearInterval(tdrTimer);tdrTimer=null;tdrReveal=Infinity;rplay.textContent="▶ Send impulse";renderTDR();return;}
+  tdrReveal=0;rplay.textContent="❚❚ Stop";const step=(tdrData.maxT)/(reduce?12:36);
+  tdrTimer=setInterval(()=>{tdrReveal+=step;if(tdrReveal>=tdrData.maxT){tdrReveal=Infinity;clearInterval(tdrTimer);tdrTimer=null;rplay.textContent="▶ Send impulse";}renderTDR();},reduce?120:55);};
+const swSmith=document.getElementById("swSmith"),swTDR=document.getElementById("swTDR"),
+  vSmith=document.getElementById("viewSmith"),vTDR=document.getElementById("viewTDR");
+function showView(t){const tdr=t==="tdr";vTDR.hidden=!tdr;vSmith.hidden=tdr;
+  swTDR.classList.toggle("on",tdr);swSmith.classList.toggle("on",!tdr);
+  if(tdr){if(!tdrData)loadRoute(0);else renderTDR();}}
+swSmith.onclick=()=>showView("smith");swTDR.onclick=()=>showView("tdr");
+loadRoute(0);
+
+recompute();
+</script>
+
+</body>
+</html>

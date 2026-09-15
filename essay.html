@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>*{box-sizing:border-box}html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>The Smith Chart Is Not a Ranker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --panel-2:#f5f7f9; --ink:#141a20; --soft:#43505c; --muted:#697682;
+  --line:#d7dee4; --hair:#e6ebef; --rim:#8695a3;
+  --accent:#0c8f95; --accent-glow:rgba(12,143,149,.12);
+  --c-robust:#0c8f95; --c-stale:#b76a12; --c-open:#3f6fd6; --c-off:#8695a3; --c-anti:#c33b46;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --shadow:0 1px 2px rgba(16,23,29,.05),0 10px 30px rgba(16,23,29,.07);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b0f14; --panel:#111821; --panel-2:#0e141b; --ink:#e8eef4; --soft:#b3bfca; --muted:#8b98a5;
+  --line:#212c37; --hair:#1a232d; --rim:#3c4d5c;
+  --accent:#35d0d6; --accent-glow:rgba(53,208,214,.14);
+  --c-robust:#35d0d6; --c-stale:#f2a33c; --c-open:#7aa2ff; --c-off:#6c7b86; --c-anti:#e5484d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --bg:#0b0f14; --panel:#111821; --panel-2:#0e141b; --ink:#e8eef4; --soft:#b3bfca; --muted:#8b98a5;
+  --line:#212c37; --hair:#1a232d; --rim:#3c4d5c;
+  --accent:#35d0d6; --accent-glow:rgba(53,208,214,.14);
+  --c-robust:#35d0d6; --c-stale:#f2a33c; --c-open:#7aa2ff; --c-off:#6c7b86; --c-anti:#e5484d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 34px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding-inline:20px;padding-block:52px 72px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin:0 0 14px}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,6vw,50px);line-height:1.08;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.dek{font-family:var(--serif);font-size:clamp(18px,2.6vw,22px);color:var(--soft);line-height:1.4;margin:14px 0 0;text-wrap:balance}
+.meta{font-family:var(--mono);font-size:12px;color:var(--muted);margin:20px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:11px 0}
+article{margin-top:34px}
+article h2{font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--accent);
+  text-transform:uppercase;margin:38px 0 12px}
+article p{font-family:var(--serif);font-size:18.5px;line-height:1.62;color:var(--ink);margin:0 0 18px}
+article p.small{font-size:16px;color:var(--soft)}
+strong{font-weight:600}
+code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.lede{font-size:20px;color:var(--soft)}
+ul.grammar{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-direction:column;gap:14px}
+ul.grammar li{font-family:var(--serif);font-size:17.5px;line-height:1.5;padding-left:18px;border-left:2px solid var(--line)}
+ul.grammar b{font-family:var(--sans);font-weight:600;font-size:15px}
+.callout{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:12px;
+  padding:18px 20px;margin:24px 0;box-shadow:var(--shadow)}
+.callout .rk{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.callout ul{margin:0;padding-left:18px}
+.callout li{font-family:var(--sans);font-size:15px;line-height:1.5;color:var(--soft);margin:0 0 8px}
+.callout li:last-child{margin:0}
+blockquote{margin:26px 0;padding:4px 0 4px 22px;border-left:3px solid var(--accent);
+  font-family:var(--serif);font-size:22px;line-height:1.42;color:var(--ink);font-weight:500;text-wrap:balance}
+/* thesis panel */
+.thesis{position:relative;margin:36px 0 40px;padding:clamp(20px,4vw,32px) clamp(18px,4vw,30px) clamp(18px,3vw,26px);
+  background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:14px;box-shadow:var(--shadow)}
+.thesis::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 80% at 0% 0%,var(--accent-glow),transparent 60%)}
+.thesis>*{position:relative}
+.thesis .rk{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin:0 0 14px;
+  display:flex;align-items:center;gap:10px}
+.thesis .rk::after{content:"";flex:1;height:1px;background:var(--line)}
+.thesis .claim{font-family:var(--serif);font-weight:500;font-size:clamp(21px,3.4vw,27px);line-height:1.32;letter-spacing:-.005em;
+  color:var(--ink);margin:0 0 22px;text-wrap:balance}
+.thesis .claim em{font-style:italic;color:var(--accent)}
+.thesis ol.moves{list-style:none;counter-reset:mv;margin:0;padding:0;border-top:1px solid var(--hair)}
+.thesis ol.moves li{counter-increment:mv;display:grid;grid-template-columns:34px 1fr;gap:0 12px;padding:14px 0;border-bottom:1px solid var(--hair)}
+.thesis ol.moves li::before{content:counter(mv,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--accent);
+  padding-top:4px;letter-spacing:.06em}
+.thesis ol.moves b{display:block;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--ink);margin:0 0 4px}
+.thesis ol.moves p{font-family:var(--serif);font-size:16.5px;line-height:1.52;color:var(--soft);margin:0}
+.thesis ol.moves li>b,.thesis ol.moves li>p{grid-column:2;min-width:0}
+.thesis ol.moves p .ev{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.thesis .status{margin:20px 0 0;padding:14px 16px;background:var(--panel-2);border:1px solid var(--hair);border-radius:10px}
+.thesis .status .rk{margin-bottom:10px;color:var(--muted)}
+.thesis .status .rk::after{display:none}
+.thesis dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;align-items:baseline}
+.thesis dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;
+  padding:3px 8px;border-radius:5px;border:1px solid currentColor;text-align:center}
+.thesis dt.ok{color:var(--c-robust)} .thesis dt.no{color:var(--c-anti)} .thesis dt.open{color:var(--c-stale)}
+.thesis dd{margin:0;font-family:var(--sans);font-size:14.5px;line-height:1.5;color:var(--soft)}
+.thesis .restate{font-family:var(--serif);font-size:18px;line-height:1.45;color:var(--ink);font-weight:500;margin:20px 0 0;
+  padding-top:16px;border-top:1px solid var(--line);text-wrap:balance}
+@media (max-width:460px){
+  .thesis dl{grid-template-columns:1fr;gap:4px}
+  .thesis dt{justify-self:start;margin-top:6px}
+  .thesis ol.moves li{grid-template-columns:26px 1fr;gap:0 8px}
+}
+/* figure */
+figure{margin:30px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.figrow{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center}
+svg.disk{width:340px;max-width:100%;height:auto;flex:1 1 300px}
+.cov{flex:1 1 240px;min-width:230px}
+.cov h4{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+table.cov-t{width:100%;border-collapse:collapse;font-size:13px}
+table.cov-t th,table.cov-t td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--hair)}
+table.cov-t th{font-family:var(--mono);font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:500}
+table.cov-t td{font-family:var(--sans)}
+.cov-t .n{font-family:var(--mono);color:var(--muted)}
+.pill{font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:5px;border:1px solid currentColor;white-space:nowrap}
+figcaption{font-family:var(--sans);font-size:13px;color:var(--muted);margin-top:14px;line-height:1.5;text-align:center}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;justify-content:center;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--soft)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.xlink{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;color:var(--accent);
+  text-decoration:none;border:1px solid var(--accent);border-radius:9px;padding:9px 14px;margin-top:6px}
+.xlink:hover{background:var(--accent-glow)}
+.appendix{margin-top:44px;padding-top:20px;border-top:1px solid var(--line)}
+.appendix h2{color:var(--muted)}
+.appendix p{font-size:15.5px;color:var(--soft)}
+.foot{margin-top:40px;font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.6}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<nav style="font:13px/1.5 'IBM Plex Mono',ui-monospace,monospace;padding:10px clamp(16px,5vw,32px);display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid rgba(128,128,128,.3);color:inherit"><a href="index.html" style="color:inherit;text-decoration:none;opacity:.75">Story</a><a href="essay.html" style="color:inherit;text-decoration:none;opacity:.75">Essay</a><a href="explorer.html" style="color:inherit;text-decoration:none;opacity:.75">Interactive&nbsp;→</a></nav>
+
+
+<div class="wrap">
+  <p class="eyebrow">Design exploration · retrieval interfaces</p>
+  <h1>The Smith Chart Is Not a Ranker</h1>
+  <p class="dek">A visual language for diagnosing retrieval fit, drift, and contradiction.</p>
+  <p class="meta">A provocation and interface experiment — not a new retrieval algorithm. Every spatial claim below is an authored display convention, not a discovered property of embeddings.</p>
+
+  <article>
+    <h2>Why a ranked list fails</h2>
+    <p class="lede">Ask a retrieval system how a memory note relates to your query and it hands back <code>0.82</code>.</p>
+    <p>Two notes can earn the same score for opposite reasons: one is direct but obsolete; another is less direct but independently corroborated; two more can both be “relevant” and flatly contradict each other. A ranked list collapses which-is-which — the very thing that decides whether you can safely use the result.</p>
+    <p>And there’s a failure a per-document score can’t see at all: the pieces are each fine, but the <em>answer</em> they compose isn’t supported — the definition is there, the current status is there, yet nothing actually backs the causal link between them. That’s a shift from “is this document suitable?” to “does this evidence hold up when assembled?” — and it needs its own view.</p>
+
+    <h2>A concrete walk-through</h2>
+    <p>Query: <em>“Does City X’s congestion charge cut traffic, and is it still in force?”</em> Four notes come back — and a ranked list would show four almost-identical scores that hide everything that matters.</p>
+
+    <figure>
+      <div class="figrow">
+        <svg class="disk" viewBox="0 0 340 340" role="img" aria-label="Smith-chart walk-through of four notes">
+          <!-- alert ring beyond rim -->
+          <circle cx="170" cy="160" r="150" fill="none" stroke="var(--c-anti)" stroke-opacity="0.35" stroke-dasharray="2 5" stroke-width="1"/>
+          <!-- rim -->
+          <circle cx="170" cy="160" r="120" fill="none" stroke="var(--rim)" stroke-width="1.5"/>
+          <!-- half tints -->
+          <text x="170" y="30" text-anchor="middle" font-size="10.5" font-family="var(--mono)" fill="var(--c-stale)">aging ↑</text>
+          <text x="170" y="300" text-anchor="middle" font-size="10.5" font-family="var(--mono)" fill="var(--c-open)">unresolved ↓</text>
+          <text x="303" y="163" text-anchor="middle" font-size="9.5" font-family="var(--mono)" fill="var(--c-anti)">alert</text>
+          <!-- center matched -->
+          <circle cx="170" cy="160" r="30" fill="none" stroke="var(--line)" stroke-width="1"/>
+          <circle cx="170" cy="160" r="5" fill="var(--accent)"/>
+          <text x="170" y="178" text-anchor="middle" font-size="9" font-family="var(--mono)" fill="var(--muted)">matched</text>
+          <!-- D generic near rim (lower-left) -->
+          <line x1="170" y1="160" x2="80" y2="214" stroke="var(--c-off)" stroke-width="1" stroke-opacity="0.4"/>
+          <circle cx="80" cy="214" r="7" fill="var(--c-off)" stroke="var(--panel)" stroke-width="1.5"/>
+          <text x="70" y="234" text-anchor="middle" font-size="12" font-weight="600" font-family="var(--mono)" fill="var(--c-off)">D</text>
+          <!-- A stale upper -->
+          <line x1="170" y1="160" x2="214" y2="92" stroke="var(--c-stale)" stroke-width="1" stroke-opacity="0.5"/>
+          <circle cx="214" cy="92" r="7" fill="var(--c-stale)" stroke="var(--panel)" stroke-width="1.5"/>
+          <text x="226" y="88" text-anchor="middle" font-size="12" font-weight="600" font-family="var(--mono)" fill="var(--c-stale)">A</text>
+          <!-- B near center -->
+          <circle cx="146" cy="150" r="7" fill="var(--c-robust)" stroke="var(--panel)" stroke-width="1.5"/>
+          <text x="134" y="146" text-anchor="middle" font-size="12" font-weight="600" font-family="var(--mono)" fill="var(--c-robust)">B</text>
+          <!-- C beyond rim -->
+          <circle cx="305" cy="132" r="7" fill="var(--c-anti)" stroke="var(--panel)" stroke-width="1.5"/>
+          <text x="305" y="115" text-anchor="middle" font-size="12" font-weight="600" font-family="var(--mono)" fill="var(--c-anti)">C</text>
+        </svg>
+        <div class="cov">
+          <h4>Claim coverage — no single note answers both halves</h4>
+          <table class="cov-t">
+            <thead><tr><th>Note</th><th>reduces&nbsp;traffic?</th><th>still&nbsp;in&nbsp;force?</th></tr></thead>
+            <tbody>
+              <tr><td><span class="n">A</span> 2019 study</td><td><span class="pill" style="color:var(--c-stale)">yes · stale</span></td><td>—</td></tr>
+              <tr><td><span class="n">B</span> dept page</td><td>—</td><td><span class="pill" style="color:var(--c-robust)">yes · current</span></td></tr>
+              <tr><td><span class="n">C</span> op-ed</td><td><span class="pill" style="color:var(--c-anti)">disputes</span></td><td>—</td></tr>
+              <tr><td><span class="n">D</span> explainer</td><td>—</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--c-robust)"></i>B — current status (incomplete on effect)</span>
+        <span><i style="background:var(--c-stale)"></i>A — on-topic but stale</span>
+        <span><i style="background:var(--c-anti)"></i>C — contradiction (past rim)</span>
+        <span><i style="background:var(--c-off)"></i>D — generic to the answer need</span>
+      </div>
+      <figcaption>The same four notes a ranked list flattens to <code>0.79 / 0.77 / 0.74 / 0.71</code> — placed so the differences are what you see first. B sits near center for the <em>still-in-force</em> half, yet the coverage grid shows it says nothing about the <em>effect</em> half. Proximity to center never means complete answer coverage.</figcaption>
+    </figure>
+
+    <section class="thesis" aria-labelledby="thesis-label">
+      <p class="rk" id="thesis-label">The thesis</p>
+      <p class="claim">Relevance is a <em>reflection coefficient</em> — complex, so it carries both how-matched and how-wrong; and reference-relative, so context reshapes the whole space rather than rescoring each item.</p>
+      <ol class="moves">
+        <li>
+          <b>Reflection, not distance.</b>
+          <p>Standard retrieval treats a note as a point and asks “how far.” This treats it as a load seen from the query and asks how much of the query’s energy it absorbs versus bounces back — relevance as impedance match, reference-relative by construction. <span class="ev">(maximum-power-transfer ≡ matched filter — real math)</span></p>
+        </li>
+        <li>
+          <b>Relevance is 2-D: magnitude + phase.</b>
+          <p>A single score is a projection that throws away the failure direction; a complex value keeps “how relevant” and “what kind of wrong” in one object. This half has production evidence — RotatE and ComplEx already use phase to carry relational meaning.</p>
+        </li>
+        <li>
+          <b>Context is a group action, not a recompute.</b>
+          <p>If context-conditioning is a Möbius transform, then “context A then B” is one composed transform, and it’s invertible — relevance-under-context has algebraic structure instead of a fresh score each turn.</p>
+        </li>
+      </ol>
+      <div class="status">
+        <p class="rk">Status — a thesis, not a product claim</p>
+        <dl>
+          <dt class="ok">Representation</dt><dd>Coherent and original.</dd>
+          <dt class="no">Ranking</dt><dd>No — |Γ| provably collapses to cosine + recency. This is a reframing, not a “beats the baseline” claim.</dd>
+          <dt class="open">Composability</dt><dd>Aspirational. An out-of-sample test showed the group-action leg holds only while context-conditioning stays close to a true Möbius map — a narrow band. So: one proven leg (phase), two elegant-but-unproven (reflection-framing, composability).</dd>
+        </dl>
+      </div>
+      <p class="restate">One proven leg, two beautiful hypotheses. That’s a theory — stated as one, not smuggled in as a result.</p>
+    </section>
+
+    <h2>The move</h2>
+    <p>Borrow the <strong>Smith chart</strong> from RF engineering. It maps a component’s impedance to a <em>reflection coefficient</em> Γ — loosely, how much of a signal bounces back instead of transferring — inside a unit disk: matched at the center (Γ=0), fully mismatched at the rim (|Γ|=1). The borrowing here: treat each note as a load seen from the query, feed a semantic-alignment score and a staleness score into an analogy-inspired mapping — alignment in the role of resistance, staleness in the role of reactance — form <code>z = R + jX</code>, and compute <code>Γ = (z − 1)/(z + 1)</code>.</p>
+    <p>The honest limits, stated plainly: <strong>the embeddings are the retrieval engine.</strong> This geometry does not rank better than cosine, and it is not RF physics applied literally — cosine is not a resistance, staleness is not a reactance. They are <em>display encodings</em>. The entire value is in what the encoding lets a person <strong>see and do</strong>, not in any claim that a note has a true impedance.</p>
+
+    <h2>The visual grammar</h2>
+    <ul class="grammar">
+      <li><b>Radius</b> — a monotonic display transform of semantic alignment (not truth, provenance, or answerability); freshness is encoded separately, never silently mixed in.</li>
+      <li><b>Angular sector</b> — a <em>declared</em> mismatch category (“aging” vs “unresolved”), not a natural continuous dimension. It’s an ontology you choose, not one the geometry discovers.</li>
+      <li><b>Beyond the rim</b> — an <em>authored alert state</em> for detected contradiction, because “disagrees with the query” is not the same as “weakly relevant.” Not an automatic consequence of the transform.</li>
+      <li><b>Locus under controlled paraphrases</b> — re-ask in meaning-preserving ways; each note traces a path. A tight locus is a <em>hypothesis</em> that the note is stable across wordings; a wide one flags phrasing-dependence.</li>
+      <li><b>Claim coverage</b> — for compound questions, a note may support one component while leaving another unsupported. Proximity to center never means complete answer coverage — the state the companion reflectogram exists to make legible.</li>
+    </ul>
+
+    <h2>What you can do with it</h2>
+    <p><strong>Inspect</strong> — see, at a glance, <em>why</em> a candidate is where it is: on-topic-but-stale, relevant-but-open, contradictory, or generic. <strong>Revalidate</strong> — for a note drifting into the aging sector, re-check and re-date it and watch it move back toward center; different claims should age at different rates. <strong>Reconcile or bridge</strong> — a contradiction past the rim opens an evidence branch that ends honestly as <em>revised</em>, <em>disputed</em> (both kept, never averaged into a false middle), or <em>unresolved</em> — never quietly tuned to the center; and a set of individually-imperfect notes can be pulled inward by one shared context, shown with an audit of what that context <em>costs</em>.</p>
+
+    <div class="callout">
+      <p class="rk">Guardrails — a lens, not physics</p>
+      <ul>
+        <li>The positions are <strong>authored encodings, not discovered laws</strong> — every one is a design choice.</li>
+        <li>The display must show its <strong>inputs, transforms, uncertainty, and provenance</strong>; a stability signal without provenance is an <em>agreement</em> signal, not an echo-chamber detector.</li>
+        <li>RF theorems <strong>motivate questions; they do not validate retrieval claims.</strong> Keep the names as interface semantics — presented as mechanics, the whole thing collapses.</li>
+      </ul>
+    </div>
+
+    <h2>The transferable idea</h2>
+    <blockquote>Don’t represent retrieval as a single relevance number — represent it as an inspectable diagnosis of <em>why</em> a candidate succeeds, fails, or is unsafe to use.</blockquote>
+    <p class="small">This is the portable takeaway; the thesis above is the sharper, riskier version of the same claim — that the diagnosis has a natural shape, a complex value rather than a scalar. Semantic fit, temporal validity, agreement/conflict state, coverage of the answer’s claims, robustness to query variation — expose <em>which</em> dimension drove the decision and <em>what</em> intervention would improve it. That’s retrieval as state-estimation and diagnosis, not nearest-neighbor lookup — and it transfers to RAG evaluation, search debugging, knowledge-base maintenance, and agent observability.</p>
+
+    <h2>How you’d know it helps</h2>
+    <p class="small">The test isn’t “is the metaphor elegant?” It’s “does it produce better decisions?” Build 10–30 deliberately constructed cases — current-and-supported, close-but-stale, two contradictory with unequal provenance, a paraphrase-brittle top hit, a multi-hop answer whose pieces are fine but whose composition fails, an echo chamber tracing to one unverified source. Show each three ways — plain ranked list, list-plus-metadata, and this visualizer — and measure whether people spot the failure mode, pick the safer evidence, and choose the right fix <em>faster</em>, while watching the opposite risk: over-trusting a display <em>because</em> it looks mathematical.</p>
+
+    <p>The Smith chart didn’t turn out to be a better ranker, and it was never going to be. It turned out to be a good excuse to stop reducing retrieval to one number — and to start treating <em>“why did this match, and should I trust it?”</em> as something you can see, interrogate, and repair.</p>
+
+    <p><a class="xlink" href="explorer.html" target="_blank" rel="noopener">↗ Open the interactive Γ-Locus Explorer</a></p>
+
+    <div class="appendix">
+      <h2>Appendix — further instruments (speculative)</h2>
+      <p>These map to real RF theory but are, so far, thought experiments — kept out of the main argument on purpose: an L-network of “moves” (reaffirm / resolve / bridge) that tunes one note toward center; a Bode–Fano-style <em>broad-vs-deep</em> frontier (a note can be exquisitely matched to one phrasing or moderately matched to many, rarely both); multi-load “broadband” matching for whole clusters; and a time-domain reflectogram that marks where answer-building breaks. Each is an analogy for intuition, not a proof about retrieval, and each earns its place only once its inputs, transform, and the decision it improves are all spelled out.</p>
+    </div>
+
+    <p class="foot">A design exploration built as a personal thinking tool. Synthetic examples throughout. The geometry is a lens; embeddings do the retrieval.</p>
+  </article>
+</div>
+
+</body>
+</html>
